@@ -4,7 +4,6 @@ This is the repository for the Avon Needs Trees Land Classification project. Thi
 By establishing a reliable baseline of current land cover, this framework will enable the development of future landscape scenarios, supporting the visualisation of potential interventions and their anticipated impacts on key ecosystem services. The resulting maps and associated data will serve two functions:
 1.	Provide an evidence-based process for habitat monitoring using remote sensing and ecosystem service modelling that can be applied to this and other Landscape Recovery projects throughout England.
 2.	Create an effective communication tool for engaging landowners and stakeholders in understanding the long-term benefits of landscape recovery over the next 30+ years.
-3.	
 The methods outlined in this document leverage open-source data sources such as Copernicus Sentinel satellite imagery and free software like QGIS, making them accessible to organizations with limited resources. The framework is structured to support subsequent ecosystem service modelling, particularly for above-ground carbon stocks, habitat connectivity, and natural flood management potential.
 
 By following this framework, ANT and similar organisations will be better equipped to plan, implement, and monitor landscape recovery initiatives, ultimately contributing to regional and national biodiversity and climate resilience goals.
