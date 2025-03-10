@@ -1,0 +1,78 @@
+// Function to mask clouds in Sentinel-2 images
+function maskS2clouds(image) {
+  var qa = image.select('QA60');
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+  return image.updateMask(mask).divide(10000)
+      .select("B.*")
+      .copyProperties(image, ["system:time_start"]);
+}
+
+// Upload your shapefile as an asset and replace this path with your asset path
+var aoi = ee.FeatureCollection(table);
+
+// Get the bounds of the AOI as a geometry
+var bounds = aoi.geometry().bounds();
+
+// Set date range for the past 10 years (July-August only)
+var endYear = 2024;
+var startYear = endYear - 10;
+
+// Create a filter for July-August months
+var monthFilter = ee.Filter.calendarRange(7, 8, 'month');
+
+// Load and filter Sentinel-2 collection
+var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+    .filterBounds(bounds)  // Use bounds instead of aoi
+    .filterDate(startYear + '-01-01', endYear + '-12-31')
+    .filter(monthFilter)
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 10))
+    .map(maskS2clouds);
+
+// Calculate the mean composite
+var meanComposite = s2.mean();
+
+// Select all bands
+var bands = ['B1','B2','B3','B4','B5','B6','B7','B8','B8A','B9','B11','B12'];
+var imageSelected = meanComposite.select(bands);
+
+// Clip the image to the rectangular bounds
+var boundedImage = imageSelected.clip(bounds);  // Use bounds instead of aoi
+
+// Create visualization parameters for natural color
+var vizParams = {
+  bands: ['B4', 'B3', 'B2'],
+  min: 0.0,
+  max: 0.3,
+};
+
+// Set map type to hybrid
+Map.setOptions('HYBRID');
+
+// Add the image to the map
+Map.centerObject(bounds, 12);  // Center on bounds
+Map.addLayer(boundedImage, vizParams, '10-Year July-August Average');
+
+// Add both the rectangular bounds and the original AOI boundary for comparison
+Map.addLayer(ee.Image().paint(bounds, 1, 1), {palette: 'blue'}, 'Export Bounds');
+Map.addLayer(ee.Image().paint(aoi, 1, 1), {palette: 'red'}, 'Original AOI');
+
+// Print number of images used in composite
+print('Number of images in collection:', s2.size());
+
+// Export the bounded image
+Export.image.toDrive({
+  image: boundedImage,
+  description: 'Sentinel2_10Year_JulyAug_Average_Rectangular',
+  folder: 'gee_images',
+  scale: 10,
+  maxPixels: 1e13,
+  crs: 'EPSG:27700',
+  region: bounds,  // Use bounds instead of aoi
+  fileFormat: 'GeoTIFF',
+  formatOptions: {
+    cloudOptimized: true
+  }
+});
